@@ -1,0 +1,107 @@
+<html>
+  <head>
+    <script src='https://cdn.firebase.com/js/client/1.1.1/firebase.js'></script>
+    <script src='https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js'></script>
+    <script src='jcanvas.min.js'></script>
+    <script src='http:////cdnjs.cloudflare.com/ajax/libs/underscore.js/1.7.0/underscore-min.js'></script>
+  </head>
+  <body>
+
+    <canvas width="400" height="400"></canvas>
+
+    <p>curl -X POST -d '{"x": 30, "y": 130}' https://fiery-fire-5323.firebaseio.com/your_name.json</p>
+    <input type="button" id="clearButton" value="Clear!">
+    <script>
+      var myDataRef = new Firebase('https://fiery-fire-5323.firebaseio.com');
+
+      $("#clearButton").on("click", function(){
+        // 全部消す
+        myDataRef.remove();
+      });
+
+      myDataRef.on('child_added', function(snapshot) {
+        console.log("child_added");
+
+        var ref = snapshot.ref();
+        ref.on('child_added', function(s) {
+
+          console.log("inner child_added");
+
+          var name = ref.name();
+          var xy = s.val();
+
+          if (hitTest(xy)) {
+            drawHitPoint(xy, name);
+          } else {
+            drawPoint(xy, name);
+          }
+        });
+      });
+
+      myDataRef.on('child_changed', function(snapshot) {
+        console.log("child_changed");
+
+
+      });
+
+      myDataRef.on('child_removed', function(snapshot) {
+        erasePoint(snapshot.val());
+      });
+
+      var circlePoint = {x: 50, y: 100, radius: 30};
+
+      $(function(){
+
+        $('canvas').drawArc({
+          strokeStyle: "red",
+          strokeWidth: 2,
+          x: circlePoint.x, y: circlePoint.y,
+          radius: circlePoint.radius
+        });
+      });
+
+      // 適当に描画する. D3 とか使ったほうが良い
+
+      function drawPoint(val, name) {
+
+        $('canvas').drawText({
+          fillStyle: 'black',
+          strokeStyle: 'black',
+          strokeWidth: 1,
+          fontSize: 10,
+          x: val.x, y: val.y,
+          text: name
+        });
+      }
+
+      function drawHitPoint(val, name) {
+
+        $('canvas').drawText({
+          fillStyle: 'blue',
+          strokeStyle: 'blue',
+          strokeWidth: 1,
+          fontSize: 10,
+          x: val.x, y: val.y,
+          text: name
+        });
+      }
+
+      function erasePoint(val) {
+          // TODO:
+          $('canvas').drawArc({
+            fillStyle: 'white',
+            x: val.x, y: val.y,
+            radius: 6
+          });
+      }
+
+      // 円は固定値なので適当に計算
+      function hitTest(xy) {
+
+        return (xy.x - circlePoint.x) * (xy.x - circlePoint.x) + (xy.y - circlePoint.y) * (xy.y - circlePoint.y) <= circlePoint.radius * circlePoint.radius;
+
+      }
+
+    </script>
+  </body>
+</html>
